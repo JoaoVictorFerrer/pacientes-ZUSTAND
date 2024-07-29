@@ -1,22 +1,47 @@
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
+import {toast} from 'react-toastify'
 import Error from "./Error";
 import { DraftPatient } from "../types/types";
 import { usePatientStore } from "../store";
 
 export default function PatientForm() {
-
-  // const {addPatient} = usePatientStore() una forma de comunicar el store con el componente y la otra es la siguinte linea 
-   const addPatient = usePatientStore(state => state.addPatient )
+  // const {addPatient} = usePatientStore() una forma de comunicar el store con el componente y la otra es la siguinte linea
+  const addPatient = usePatientStore((state) => state.addPatient);
+  const activeId = usePatientStore((state) => state.activeId);
+  const patients = usePatientStore((state) => state.patients);
+  const updatePatient = usePatientStore((state) => state.updatePatient);
 
   const {
     register,
     handleSubmit,
-    formState: { errors},reset,
-  } = useForm <DraftPatient>(); // lo que hago que cuando se ejecute el form le estoy diciento que tome el tipo de DraftPatient asi la data recibida coincide con el type de registerPatient
+    setValue,
+    formState: { errors },
+    reset,
+  } = useForm<DraftPatient>(); // lo que hago que cuando se ejecute el form le estoy diciento que tome el tipo de DraftPatient asi la data recibida coincide con el type de registerPatient
 
-  const registerPatient = (data : DraftPatient) => {
-    addPatient(data)
-    reset() //para reniciar el formaulario por la funcionalidad de ReactHookForm
+  useEffect(() => {
+    if (activeId) {
+      const activePatient = patients.filter(
+        (patient) => patient.id === activeId
+      )[0];
+      setValue("name", activePatient.name);
+      setValue("caretaker", activePatient.caretaker);
+      setValue("date", activePatient.date);
+      setValue("email", activePatient.email);
+      setValue("symptoms", activePatient.symptoms);
+    }
+  }, [activeId]);
+
+  const registerPatient = (data: DraftPatient) => {
+    if (activeId) {
+      updatePatient(data);
+      toast.success('Paciente actualizado correctamente')
+    } else {
+      addPatient(data);
+      toast.success('Paciente registrado correctamente')
+    }
+    reset(); //para reniciar el formaulario por la funcionalidad de ReactHookForm
   };
 
   return (
@@ -48,7 +73,7 @@ export default function PatientForm() {
           />
           {errors.name && (
             <Error>
-              {errors.name?.message} 
+              {errors.name?.message}
             </Error> /*  <Error>{errors.name?.message?.toString()}</Error>  esta sintaxis como esta {errors.name?.message as string}  ya no seria necesario ya que el type ya esta definido por ello ya no marcaria un error*/
           )}
         </div>
@@ -66,9 +91,7 @@ export default function PatientForm() {
               required: "El nombre del propietario es obligatorio",
             })}
           />
-          {errors.caretaker && (
-            <Error>{errors.caretaker?.message}</Error>
-          )}
+          {errors.caretaker && <Error>{errors.caretaker?.message}</Error>}
         </div>
 
         <div className="mb-5">
@@ -87,10 +110,8 @@ export default function PatientForm() {
                 message: "Email No Válido",
               },
             })}
-            />
-            {errors.email && (
-                <Error>{errors.email?.message}</Error>
-              )} 
+          />
+          {errors.email && <Error>{errors.email?.message}</Error>}
         </div>
 
         <div className="mb-5">
@@ -105,9 +126,7 @@ export default function PatientForm() {
               required: "La fecha de alta es obligatoria",
             })}
           />
-          {errors.date && (
-            <Error>{errors.date?.message}</Error>
-          )}
+          {errors.date && <Error>{errors.date?.message}</Error>}
         </div>
 
         <div className="mb-5">
@@ -122,9 +141,7 @@ export default function PatientForm() {
               required: "Los sintomas son obligatorios",
             })}
           />
-          {errors.symptoms && (
-            <Error>{errors.symptoms?.message}</Error>
-          )}
+          {errors.symptoms && <Error>{errors.symptoms?.message}</Error>}
         </div>
 
         <input
